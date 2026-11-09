@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grindcraft Ultimate - Expanded Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --mc-gui-bg: #c6c6c6;
+            --mc-gui-dark: #373737;
+            --mc-gui-light: #ffffff;
+            --mc-slot-bg: #8b8b8b;
+            --mc-slot-border-dark: #373737;
+            --mc-slot-border-light: #ffffff;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background-color: #121212;
+            background-image: radial-gradient(#242424 1px, transparent 0);
+            background-size: 16px 16px;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        .font-pixel {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* Minecraft 3D Beveled Panel Style */
+        .mc-panel {
+            background-color: var(--mc-gui-bg);
+            border: 4px solid;
+            border-color: #ffffff #555555 #555555 #ffffff;
+            color: #111;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+        }
+
+        .mc-panel-dark {
+            background-color: #262626;
+            border: 4px solid;
+            border-color: #4a4a4a #1a1a1a #1a1a1a #4a4a4a;
+            color: #fff;
+        }
+
+        /* Minecraft Inventory Slot Style */
+        .mc-slot {
+            width: 48px;
+            height: 48px;
+            background-color: #8b8b8b;
+            border: 3px solid;
+            border-color: #373737 #ffffff #ffffff #373737;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.05s ease;
+        }
+
+        .mc-slot:hover {
+            background-color: #a0a0a0;
+            border-color: #555 #fff #fff #555;
+        }
+
+        .mc-slot.active {
+            outline: 3px solid #ffde59;
+            z-index: 10;
+        }
+
+        .mc-slot-count {
+            position: absolute;
+            bottom: 1px;
+            right: 3px;
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            line-height: 1;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000;
+            pointer-events: none;
+        }
+
+        /* Minecraft Buttons */
+        .mc-button {
+            background-color: #8b8b8b;
+            border: 3px solid;
+            border-color: #ffffff #373737 #373737 #ffffff;
+            color: #111;
+            font-family: 'VT323', monospace;
+            font-size: 1.25rem;
+            padding: 6px 12px;
+            cursor: pointer;
+            text-shadow: 1px 1px 0px #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.1s;
+        }
+
+        .mc-button:hover:not(:disabled) {
+            background-color: #a0a0a0;
+        }
+
+        .mc-button:active:not(:disabled) {
+            border-color: #373737 #ffffff #ffffff #373737;
+            transform: translateY(2px);
+        }
+
+        .mc-button:disabled {
+            background-color: #555555;
+            border-color: #777777 #222222 #222222 #777777;
+            color: #888888;
+            text-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .mc-tab {
+            background-color: #555555;
+            border: 3px solid;
+            border-color: #888888 #222222 #222222 #888888;
+            color: #ccc;
+            padding: 6px 14px;
+            cursor: pointer;
+        }
+
+        .mc-tab.active {
+            background-color: var(--mc-gui-bg);
+            border-color: #ffffff #555555 var(--mc-gui-bg) #ffffff;
+            color: #111;
+            font-weight: bold;
+        }
+
+        /* Minecraft Hover Tooltip */
+        .mc-tooltip {
+            position: absolute;
+            z-index: 100;
+            background: rgba(16, 0, 16, 0.94);
+            border: 2px solid #2b005c;
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: white;
+            pointer-events: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            display: none;
+            max-width: 240px;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #222;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border: 1px solid #777;
+        }
+
+        /* Progress Bar */
+        .mc-progress-bg {
+            background-color: #373737;
+            border: 2px solid #1a1a1a;
+        }
+        .mc-progress-fill {
+            background-color: #55ff55;
+            height: 100%;
+            transition: width 0.2s linear;
+        }
+
+        /* Floating text animation */
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+        .float-text {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 10px;
+            color: #ffff55;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-zinc-900 border-b-4 border-zinc-700 px-4 py-2 flex flex-wrap items-center justify-between z-20">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🟩</span>
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-wide text-yellow-400 font-pixel drop-shadow">GRINDCRAFT</h1>
+                <p class="text-xs text-zinc-400">Expanded Edition &bull; Deep Progression</p>
+            </div>
+        </div>
+
+        <!-- Dimension Selectors -->
+        <div class="flex items-center space-x-2 my-1">
+            <button id="tab-overworld" onclick="switchDimension('overworld')" class="mc-tab active text-sm flex items-center gap-1">
+                🌲 Overworld
+            </button>
+            <button id="tab-nether" onclick="switchDimension('nether')" class="mc-tab text-sm flex items-center gap-1 opacity-60" title="Requires Nether Portal">
+                🔥 Nether <span id="nether-lock">🔒</span>
+            </button>
+            <button id="tab-end" onclick="switchDimension('end')" class="mc-tab text-sm flex items-center gap-1 opacity-60" title="Requires 12 Eyes of Ender & End Portal">
+                👁️ The End <span id="end-lock">🔒</span>
+            </button>
+        </div>
+
+        <!-- Quick Stats & Actions -->
+        <div class="flex items-center space-x-4 text-sm">
+            <div class="hidden sm:flex flex-col text-right text-zinc-300">
+                <span>Gathered: <strong id="stat-gathered" class="text-yellow-300">0</strong></span>
+                <span>Crafted: <strong id="stat-crafted" class="text-green-300">0</strong></span>
+            </div>
+
+            <button onclick="toggleAudio()" id="btn-audio" class="mc-button py-1 px-2 text-xs" title="Toggle Sound Effects">
+                🔊 Sound: ON
+            </button>
+            <button onclick="saveGame(true)" class="mc-button py-1 px-2 text-xs" title="Save Game to Browser">
+                💾 Save
+            </button>
+            <button onclick="exportSave()" class="mc-button py-1 px-2 text-xs" title="Export Save File">
+                📤 Export
+            </button>
+            <button onclick="importSavePrompt()" class="mc-button py-1 px-2 text-xs" title="Import Save File">
+                📥 Import
+            </button>
+            <button onclick="confirmReset()" class="mc-button py-1 px-2 text-xs border-red-700 bg-red-900 text-white" title="Reset All Progress">
+                🗑️ Reset
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game View Split into 3 Columns -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+        <!-- LEFT COLUMN: Gathering Nodes, Automation & Workers -->
+        <section class="w-full md:w-1/3 lg:w-1/4 bg-zinc-950 border-r-4 border-zinc-800 p-4 flex flex-col h-full overflow-y-auto gap-4">
+            
+            <!-- Active Dimension Panel -->
+            <div class="mc-panel p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-center border-b-2 border-zinc-400 pb-2">
+                    <h2 id="dim-title" class="text-xl font-bold font-pixel text-zinc-800">Overworld</h2>
+                    <span id="pickaxe-tier-badge" class="bg-amber-800 text-white text-xs px-2 py-1 border border-black">Tier: Wood</span>
+                </div>
+
+                <!-- Interactive Gathering Buttons (Changes with dimension) -->
+                <div id="gathering-nodes-container" class="flex flex-col gap-3">
+                    <!-- Dynamic Gathering nodes generated by JS -->
+                </div>
+            </div>
+
+            <!-- Automation & Workers Panel -->
+            <div class="mc-panel p-4 flex flex-col gap-3 flex-1">
+                <div class="flex justify-between items-center border-b-2 border-zinc-400 pb-2">
+                    <h2 class="text-xl font-bold font-pixel text-zinc-800">Auto Workers</h2>
+                    <span id="stat-cps" class="text-xs bg-zinc-800 text-yellow-300 px-2 py-1">0 item/s</span>
+                </div>
+
+                <div id="workers-list" class="flex flex-col gap-2 overflow-y-auto max-h-96 pr-1">
+                    <!-- Dynamic workers generated by JS -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- CENTER COLUMN: Minecraft GUI Crafting Table, Furnace, Smithing & Recipes -->
+        <section class="flex-1 bg-zinc-900 p-4 flex flex-col h-full overflow-y-auto items-center justify-start gap-4 relative">
+            
+            <!-- Workbench / Station Switcher -->
+            <div class="flex space-x-2">
+                <button id="st-tab-inventory" onclick="switchStation('inventory')" class="mc-tab active">2x2 Crafting</button>
+                <button id="st-tab-crafting" onclick="switchStation('crafting')" class="mc-tab">3x3 Bench</button>
+                <button id="st-tab-furnace" onclick="switchStation('furnace')" class="mc-tab">Furnace</button>
+                <button id="st-tab-smithing" onclick="switchStation('smithing')" class="mc-tab">Smithing Table</button>
+            </div>
+
+            <!-- MAIN CRAFTING GUI PANEL -->
+            <div class="mc-panel p-6 flex flex-col items-center gap-4 relative w-full max-w-xl">
+                
+                <!-- Station Title Header -->
+                <div class="w-full flex justify-between items-center border-b-2 border-zinc-500 pb-2">
+                    <span id="station-title" class="text-xl font-bold text-zinc-800">Crafting Table</span>
+                    <div class="space-x-2">
+                        <button onclick="clearCraftingGrid()" class="mc-button py-0 px-2 text-xs">Clear Grid</button>
+                        <button onclick="quickAutoFillCraft()" class="mc-button py-0 px-2 text-xs bg-emerald-700 text-white">Fill Recipe</button>
+                    </div>
+                </div>
+
+                <!-- 1. CRAFTING GRID INTERFACE (2x2 / 3x3) -->
+                <div id="gui-crafting-view" class="flex items-center justify-center gap-6 my-2">
+                    <!-- Grid Matrix -->
+                    <div id="crafting-grid" class="grid grid-cols-3 gap-1 p-2 bg-zinc-600 border-2 border-zinc-800">
+                        <!-- 9 Slots dynamically managed -->
+                    </div>
+
+                    <!-- Arrow -->
+                    <div class="flex flex-col items-center">
+                        <span class="text-4xl text-zinc-700">➔</span>
+                    </div>
+
+                    <!-- Result Slot & Craft Buttons -->
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="output-slot" class="mc-slot w-16 h-16 border-4 border-yellow-500 bg-zinc-700" onclick="craftOutputItem()">
+                            <span id="output-icon" class="text-3xl"></span>
+                            <span id="output-count" class="mc-slot-count text-lg"></span>
+                        </div>
+                        <button id="btn-craft-action" onclick="craftOutputItem()" class="mc-button w-full text-sm font-bold bg-amber-500 text-black">
+                            CRAFT
+                        </button>
+                        <button id="btn-craft-all" onclick="craftAllPossible()" class="mc-button w-full text-xs bg-amber-600 text-black">
+                            Craft Max
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. FURNACE INTERFACE -->
+                <div id="gui-furnace-view" class="hidden flex flex-col items-center gap-4 my-2">
+                    <div class="flex items-center gap-6">
+                        <div class="flex flex-col gap-2 items-center">
+                            <span class="text-xs text-zinc-700 font-bold">INPUT</span>
+                            <div id="furnace-input" class="mc-slot" onclick="selectFurnaceSlot('input')"></div>
+                            <span class="text-lg">🔥</span>
+                            <span class="text-xs text-zinc-700 font-bold">FUEL</span>
+                            <div id="furnace-fuel" class="mc-slot" onclick="selectFurnaceSlot('fuel')"></div>
+                        </div>
+
+                        <div class="flex flex-col items-center gap-1 w-24">
+                            <span class="text-xs text-zinc-700 font-bold">SMELTING</span>
+                            <div class="mc-progress-bg w-full h-4">
+                                <div id="furnace-progress" class="mc-progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 items-center">
+                            <span class="text-xs text-zinc-700 font-bold">OUTPUT</span>
+                            <div id="furnace-output" class="mc-slot w-14 h-14 border-yellow-500" onclick="claimFurnaceOutput()"></div>
+                            <button onclick="claimFurnaceOutput()" class="mc-button text-xs py-1">Collect</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. SMITHING TABLE INTERFACE -->
+                <div id="gui-smithing-view" class="hidden flex flex-col items-center gap-4 my-2">
+                    <div class="flex items-center gap-4">
+                        <div id="smithing-base" class="mc-slot" onclick="selectSmithingSlot('base')" title="Diamond Tool/Armor"></div>
+                        <span class="text-2xl text-zinc-700">+</span>
+                        <div id="smithing-addition" class="mc-slot" onclick="selectSmithingSlot('addition')" title="Netherite Ingot"></div>
+                        <span class="text-2xl text-zinc-700">➔</span>
+                        <div id="smithing-output" class="mc-slot w-14 h-14 border-purple-600"></div>
+                    </div>
+                    <button onclick="performSmithing()" class="mc-button text-sm bg-purple-700 text-white font-bold px-6">UPGRADE GEAR</button>
+                </div>
+
+                <!-- Recipe Book Header & Filter Tabs -->
+                <div class="w-full border-t-2 border-zinc-400 pt-3 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold font-pixel text-zinc-800">📖 Recipe Book</h3>
+                        <input type="text" id="recipe-search" oninput="renderRecipeBook()" placeholder="Search recipes..." class="px-2 py-1 text-xs border border-zinc-600 bg-white text-black rounded-none">
+                    </div>
+                    <div class="flex space-x-1 text-xs overflow-x-auto pb-1">
+                        <button onclick="setRecipeCategory('all')" class="mc-button py-0 px-2 text-xs">All</button>
+                        <button onclick="setRecipeCategory('building')" class="mc-button py-0 px-2 text-xs">Blocks</button>
+                        <button onclick="setRecipeCategory('tools')" class="mc-button py-0 px-2 text-xs">Tools</button>
+                        <button onclick="setRecipeCategory('combat')" class="mc-button py-0 px-2 text-xs">Combat</button>
+                        <button onclick="setRecipeCategory('nether')" class="mc-button py-0 px-2 text-xs">Nether/End</button>
+                    </div>
+                </div>
+
+                <!-- Recipe Cards Grid -->
+                <div id="recipe-book-grid" class="w-full grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1 bg-zinc-300 border border-zinc-500">
+                    <!-- Dynamic Recipes List -->
+                </div>
+
+            </div>
+
+            <!-- Boss Battle Panel (Triggered in End Dimension) -->
+            <div id="boss-panel" class="hidden mc-panel-dark p-6 w-full max-w-xl border-4 border-purple-600 flex flex-col items-center gap-4">
+                <div class="flex justify-between items-center w-full border-b border-purple-500 pb-2">
+                    <h2 class="text-2xl font-bold font-pixel text-purple-400 flex items-center gap-2">🐉 ENDER DRAGON</h2>
+                    <span class="text-xs bg-purple-950 text-purple-200 px-2 py-1 border border-purple-700">BOSS FIGHT</span>
+                </div>
+                
+                <div class="w-full text-center space-y-1">
+                    <div class="flex justify-between text-xs text-purple-300">
+                        <span>Dragon Health</span>
+                        <span id="boss-hp-text">200 / 200</span>
+                    </div>
+                    <div class="mc-progress-bg w-full h-6 border-purple-800">
+                        <div id="boss-hp-bar" class="mc-progress-fill bg-purple-600" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 items-center justify-center my-2">
+                    <button onclick="attackBoss()" class="mc-button bg-red-700 text-white font-bold text-lg py-3 px-8 border-red-500 hover:bg-red-600">
+                        ⚔️ ATTACK DRAGON!
+                    </button>
+                </div>
+
+                <p id="boss-log" class="text-xs text-zinc-400 italic text-center">Prepare your gear! Equip high tier weapons and armor to defeat the dragon.</p>
+            </div>
+
+        </section>
+
+
+        <!-- RIGHT COLUMN: Character Equipment & Full Inventory Grid -->
+        <section class="w-full md:w-1/3 lg:w-1/4 bg-zinc-950 border-l-4 border-zinc-800 p-4 flex flex-col h-full overflow-y-auto gap-4">
+            
+            <!-- Player Stats & Equipment Panel -->
+            <div class="mc-panel p-4 flex flex-col gap-3">
+                <h2 class="text-xl font-bold font-pixel text-zinc-800 border-b-2 border-zinc-400 pb-1">Character Equipment</h2>
+                
+                <!-- Armor & Tool Slots -->
+                <div class="grid grid-cols-4 gap-2 justify-items-center">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-zinc-600 font-bold">HELMET</span>
+                        <div id="eq-helmet" class="mc-slot" onclick="unequipSlot('helmet')"></div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-zinc-600 font-bold">CHEST</span>
+                        <div id="eq-chest" class="mc-slot" onclick="unequipSlot('chest')"></div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-zinc-600 font-bold">LEGS</span>
+                        <div id="eq-legs" class="mc-slot" onclick="unequipSlot('legs')"></div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-zinc-600 font-bold">BOOTS</span>
+                        <div id="eq-boots" class="mc-slot" onclick="unequipSlot('boots')"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-around items-center bg-zinc-300 p-2 border border-zinc-500 text-sm font-bold text-zinc-800">
+                    <span>⚔️ Attack: <span id="stat-atk" class="text-red-700">1</span></span>
+                    <span>🛡️ Defense: <span id="stat-def" class="text-blue-700">0</span></span>
+                </div>
+            </div>
+
+            <!-- Full Inventory Grid Panel -->
+            <div class="mc-panel p-4 flex flex-col gap-3 flex-1">
+                <div class="flex justify-between items-center border-b-2 border-zinc-400 pb-1">
+                    <h2 class="text-xl font-bold font-pixel text-zinc-800">Inventory</h2>
+                    <span id="inv-capacity-text" class="text-xs text-zinc-700">Items: 0</span>
+                </div>
+
+                <!-- Search Inventory -->
+                <input type="text" id="inv-search" oninput="renderInventory()" placeholder="Filter inventory..." class="px-2 py-1 text-xs border border-zinc-600 bg-white text-black w-full">
+
+                <!-- Inventory Slots Container -->
+                <div id="inventory-grid" class="grid grid-cols-4 sm:grid-cols-5 gap-1.5 overflow-y-auto max-h-[500px] p-2 bg-zinc-400 border-2 border-zinc-600">
+                    <!-- Dynamic inventory slots -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Custom Minecraft Style Hover Tooltip -->
+    <div id="tooltip" class="mc-tooltip">
+        <h4 id="tooltip-title" class="text-sm font-bold text-yellow-300 border-b border-purple-800 pb-1 mb-1">Item Name</h4>
+        <p id="tooltip-desc" class="text-xs text-zinc-300">Item description goes here.</p>
+        <p id="tooltip-stats" class="text-xs text-green-400 font-bold mt-1"></p>
+    </div>
+
+    <!-- AUDIO SYNTHESIZER (Web Audio API) -->
+    <script>
+        // Web Audio API Procedural Sound Effects Generator
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playPop() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            playWoodChop() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playMineStone() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.1);
+            }
+
+            playCrafting() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.06);
+                osc.frequency.setValueAtTime(659.25, now + 0.12);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.2);
+            }
+
+            playSmelt() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(300, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+
+            playDragonHurt() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(90, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+        }
+
+        const sfx = new SoundFX();
+        function toggleAudio() {
+            sfx.enabled = !sfx.enabled;
+            document.getElementById('btn-audio').textContent = `🔊 Sound: ${sfx.enabled ? 'ON' : 'OFF'}`;
+        }
+    </script>
+
+    <!-- CORE GAME ENGINE DATA & LOGIC -->
+    <script>
+        // --- 1. ITEM DATABASE & DEFINITIONS ---
+        const ITEMS = {
+            // Overworld Basic
+            wood_log: { id: 'wood_log', name: 'Wood Log', icon: '🪵', desc: 'Harvested from trees.', category: 'building' },
+            planks: { id: 'planks', name: 'Oak Planks', icon: '🧱', desc: 'Basic building material.', category: 'building' },
+            stick: { id: 'stick', name: 'Stick', icon: '🥢', desc: 'Crafting handle for tools.', category: 'building' },
+            cobblestone: { id: 'cobblestone', name: 'Cobblestone', icon: '🪨', desc: 'Mined from stone blocks.', category: 'building' },
+            stone: { id: 'stone', name: 'Stone', icon: '⛰️', desc: 'Smelted cobblestone.', category: 'building' },
+            coal: { id: 'coal', name: 'Coal', icon: '⬛', desc: 'Fuel for smelting & torches.', category: 'building' },
+            charcoal: { id: 'charcoal', name: 'Charcoal', icon: '🖤', desc: 'Smelted wood fuel.', category: 'building' },
+            torch: { id: 'torch', name: 'Torch', icon: '🕯️', desc: 'Provides light and warmth.', category: 'building' },
+
+            // Ores & Metals
+            raw_iron: { id: 'raw_iron', name: 'Raw Iron', icon: '🪨', desc: 'Unrefined iron ore.', category: 'building' },
+            iron_ingot: { id: 'iron_ingot', name: 'Iron Ingot', icon: '⚪', desc: 'Versatile strong metal.', category: 'building' },
+            raw_gold: { id: 'raw_gold', name: 'Raw Gold', icon: '🟡', desc: 'Unrefined gold ore.', category: 'building' },
+            gold_ingot: { id: 'gold_ingot', name: 'Gold Ingot', icon: '🌟', desc: 'Precious metal ingot.', category: 'building' },
+            redstone: { id: 'redstone', name: 'Redstone Dust', icon: '🔴', desc: 'Conducts automated energy.', category: 'building' },
+            diamond: { id: 'diamond', name: 'Diamond', icon: '💎', desc: 'Extremely durable gemstone.', category: 'building' },
+
+            // Drops & Mob Materials
+            leather: { id: 'leather', name: 'Leather', icon: '🟤', desc: 'Dropped by cows.', category: 'combat' },
+            raw_beef: { id: 'raw_beef', name: 'Raw Beef', icon: '🥩', desc: 'Food from cows.', category: 'combat' },
+            cooked_beef: { id: 'cooked_beef', name: 'Steak', icon: '🍖', desc: 'Restores health and hunger.', category: 'combat' },
+            string: { id: 'string', name: 'String', icon: '🧵', desc: 'Dropped by spiders.', category: 'combat' },
+            bone: { id: 'bone', name: 'Bone', icon: '🦴', desc: 'Dropped by skeletons.', category: 'combat' },
+            gunpowder: { id: 'gunpowder', name: 'Gunpowder', icon: '💣', desc: 'Dropped by creepers.', category: 'combat' },
+            ender_pearl: { id: 'ender_pearl', name: 'Ender Pearl', icon: '🔮', desc: 'Dropped by Endermen.', category: 'nether' },
+            eye_of_ender: { id: 'eye_of_ender', name: 'Eye of Ender', icon: '👁️', desc: 'Key to unlock The End Portal.', category: 'nether' },
+
+            // Tools (Pickaxes, Swords)
+            wood_pickaxe: { id: 'wood_pickaxe', name: 'Wooden Pickaxe', icon: '⛏️', desc: 'Tier 1 Pickaxe. Can mine Cobblestone.', pickaxeTier: 1, category: 'tools' },
+            stone_pickaxe: { id: 'stone_pickaxe', name: 'Stone Pickaxe', icon: '⛏️', desc: 'Tier 2 Pickaxe. Can mine Iron Ore.', pickaxeTier: 2, category: 'tools' },
+            iron_pickaxe: { id: 'iron_pickaxe', name: 'Iron Pickaxe', icon: '⛏️', desc: 'Tier 3 Pickaxe. Can mine Gold & Diamond.', pickaxeTier: 3, category: 'tools' },
+            diamond_pickaxe: { id: 'diamond_pickaxe', name: 'Diamond Pickaxe', icon: '⛏️', desc: 'Tier 4 Pickaxe. Can mine Obsidian & Ancient Debris.', pickaxeTier: 4, category: 'tools' },
+            netherite_pickaxe: { id: 'netherite_pickaxe', name: 'Netherite Pickaxe', icon: '⛏️', desc: 'Tier 5 Ultimate Pickaxe.', pickaxeTier: 5, category: 'tools' },
+
+            wood_sword: { id: 'wood_sword', name: 'Wooden Sword', icon: '🗡️', atk: 3, category: 'combat' },
+            stone_sword: { id: 'stone_sword', name: 'Stone Sword', icon: '🗡️', atk: 5, category: 'combat' },
+            iron_sword: { id: 'iron_sword', name: 'Iron Sword', icon: '⚔️', atk: 8, category: 'combat' },
+            diamond_sword: { id: 'diamond_sword', name: 'Diamond Sword', icon: '⚔️', atk: 14, category: 'combat' },
+            netherite_sword: { id: 'netherite_sword', name: 'Netherite Sword', icon: '🗡️', atk: 25, category: 'combat' },
+
+            // Armor Sets
+            iron_helmet: { id: 'iron_helmet', name: 'Iron Helmet', icon: '🪖', def: 2, slot: 'helmet', category: 'combat' },
+            iron_chestplate: { id: 'iron_chestplate', name: 'Iron Chestplate', icon: '🦺', def: 6, slot: 'chest', category: 'combat' },
+            iron_leggings: { id: 'iron_leggings', name: 'Iron Leggings', icon: '👖', def: 5, slot: 'legs', category: 'combat' },
+            iron_boots: { id: 'iron_boots', name: 'Iron Boots', icon: '🥾', def: 2, slot: 'boots', category: 'combat' },
+
+            diamond_helmet: { id: 'diamond_helmet', name: 'Diamond Helmet', icon: '🪖', def: 4, slot: 'helmet', category: 'combat' },
+            diamond_chestplate: { id: 'diamond_chestplate', name: 'Diamond Chestplate', icon: '🦺', def: 10, slot: 'chest', category: 'combat' },
+            diamond_leggings: { id: 'diamond_leggings', name: 'Diamond Leggings', icon: '👖', def: 8, slot: 'legs', category: 'combat' },
+            diamond_boots: { id: 'diamond_boots', name: 'Diamond Boots', icon: '🥾', def: 4, slot: 'boots', category: 'combat' },
+
+            netherite_helmet: { id: 'netherite_helmet', name: 'Netherite Helmet', icon: '🪖', def: 7, slot: 'helmet', category: 'combat' },
+            netherite_chestplate: { id: 'netherite_chestplate', name: 'Netherite Chestplate', icon: '🦺', def: 15, slot: 'chest', category: 'combat' },
+            netherite_leggings: { id: 'netherite_leggings', name: 'Netherite Leggings', icon: '👖', def: 12, slot: 'legs', category: 'combat' },
+            netherite_boots: { id: 'netherite_boots', name: 'Netherite Boots', icon: '🥾', def: 7, slot: 'boots', category: 'combat' },
+
+            // Stations & Portals
+            crafting_table: { id: 'crafting_table', name: 'Crafting Table', icon: '📦', desc: 'Unlocks 3x3 Crafting Grid.', category: 'building' },
+            furnace: { id: 'furnace', name: 'Furnace', icon: '🥌', desc: 'Unlocks Smelting ores and raw materials.', category: 'building' },
+            smithing_table: { id: 'smithing_table', name: 'Smithing Table', icon: '🔨', desc: 'Upgrades Diamond gear to Netherite.', category: 'building' },
+            nether_portal: { id: 'nether_portal', name: 'Nether Portal', icon: '🔮', desc: 'Unlocks access to The Nether dimension.', category: 'nether' },
+
+            // Nether & End Materials
+            netherrack: { id: 'netherrack', name: 'Netherrack', icon: '🧱', desc: 'Abundant fiery stone.', category: 'nether' },
+            blaze_rod: { id: 'blaze_rod', name: 'Blaze Rod', icon: '🔥', desc: 'Dropped by Nether Blazes.', category: 'nether' },
+            blaze_powder: { id: 'blaze_powder', name: 'Blaze Powder', icon: '💥', desc: 'Crafted from Blaze Rods.', category: 'nether' },
+            ancient_debris: { id: 'ancient_debris', name: 'Ancient Debris', icon: '🪨', desc: 'Rare ore found deep in the Nether.', category: 'nether' },
+            netherite_scrap: { id: 'netherite_scrap', name: 'Netherite Scrap', icon: '🪙', desc: 'Smelted from Ancient Debris.', category: 'nether' },
+            netherite_ingot: { id: 'netherite_ingot', name: 'Netherite Ingot', icon: '⬛', desc: 'Combined Netherite Scrap & Gold Ingot.', category: 'nether' },
+            
+            end_stone: { id: 'end_stone', name: 'End Stone', icon: '🟡', desc: 'Mysterious stone from The End.', category: 'nether' },
+            dragon_egg: { id: 'dragon_egg', name: 'Dragon Egg', icon: '🥚', desc: 'Trophy from defeating the Ender Dragon!', category: 'nether' }
+        };
+
+        // --- 2. RECIPE BOOK & MATRIX CRAFTING PATTERNS ---
+        const RECIPES = [
+            // Planks
+            { id: 'planks', yield: 4, pattern: [['wood_log']] },
+            // Sticks
+            { id: 'stick', yield: 4, pattern: [['planks'], ['planks']] },
+            // Crafting Table
+            { id: 'crafting_table', yield: 1, pattern: [['planks', 'planks'], ['planks', 'planks']] },
+            // Furnace
+            { id: 'furnace', yield: 1, pattern: [
+                ['cobblestone', 'cobblestone', 'cobblestone'],
+                ['cobblestone', null,          'cobblestone'],
+                ['cobblestone', 'cobblestone', 'cobblestone']
+            ]},
+            // Wooden Pickaxe
+            { id: 'wood_pickaxe', yield: 1, pattern: [
+                ['planks', 'planks', 'planks'],
+                [null,     'stick',  null],
+                [null,     'stick',  null]
+            ]},
+            // Stone Pickaxe
+            { id: 'stone_pickaxe', yield: 1, pattern: [
+                ['cobblestone', 'cobblestone', 'cobblestone'],
+                [null,          'stick',       null],
+                [null,          'stick',       null]
+            ]},
+            // Iron Pickaxe
+            { id: 'iron_pickaxe', yield: 1, pattern: [
+                ['iron_ingot', 'iron_ingot', 'iron_ingot'],
+                [null,         'stick',      null],
+                [null,         'stick',      null]
+            ]},
+            // Diamond Pickaxe
+            { id: 'diamond_pickaxe', yield: 1, pattern: [
+                ['diamond', 'diamond', 'diamond'],
+                [null,      'stick',   null],
+                [null,      'stick',   null]
+            ]},
+            // Swords
+            { id: 'wood_sword', yield: 1, pattern: [['planks'], ['planks'], ['stick']] },
+            { id: 'stone_sword', yield: 1, pattern: [['cobblestone'], ['cobblestone'], ['stick']] },
+            { id: 'iron_sword', yield: 1, pattern: [['iron_ingot'], ['iron_ingot'], ['stick']] },
+            { id: 'diamond_sword', yield: 1, pattern: [['diamond'], ['diamond'], ['stick']] },
+            
+            // Iron Armor
+            { id: 'iron_helmet', yield: 1, pattern: [['iron_ingot', 'iron_ingot', 'iron_ingot'], ['iron_ingot', null, 'iron_ingot']] },
+            { id: 'iron_chestplate', yield: 1, pattern: [['iron_ingot', null, 'iron_ingot'], ['iron_ingot', 'iron_ingot', 'iron_ingot'], ['iron_ingot', 'iron_ingot', 'iron_ingot']] },
+            { id: 'iron_leggings', yield: 1, pattern: [['iron_ingot', 'iron_ingot', 'iron_ingot'], ['iron_ingot', null, 'iron_ingot'], ['iron_ingot', null, 'iron_ingot']] },
+            { id: 'iron_boots', yield: 1, pattern: [['iron_ingot', null, 'iron_ingot'], ['iron_ingot', null, 'iron_ingot']] },
+
+            // Diamond Armor
+            { id: 'diamond_helmet', yield: 1, pattern: [['diamond', 'diamond', 'diamond'], ['diamond', null, 'diamond']] },
+            { id: 'diamond_chestplate', yield: 1, pattern: [['diamond', null, 'diamond'], ['diamond', 'diamond', 'diamond'], ['diamond', 'diamond', 'diamond']] },
+            { id: 'diamond_leggings', yield: 1, pattern: [['diamond', 'diamond', 'diamond'], ['diamond', null, 'diamond'], ['diamond', null, 'diamond']] },
+            { id: 'diamond_boots', yield: 1, pattern: [['diamond', null, 'diamond'], ['diamond', null, 'diamond']] },
+
+            // Torch
+            { id: 'torch', yield: 4, pattern: [['coal'], ['stick']] },
+            
+            // Nether & Portal Items
+            { id: 'nether_portal', yield: 1, pattern: [
+                ['obsidian', 'obsidian', 'obsidian'],
+                ['obsidian', null,       'obsidian'],
+                ['obsidian', 'obsidian', 'obsidian']
+            ]},
+            { id: 'blaze_powder', yield: 2, pattern: [['blaze_rod']] },
+            { id: 'eye_of_ender', yield: 1, pattern: [['ender_pearl', 'blaze_powder']] },
+            { id: 'netherite_ingot', yield: 1, pattern: [
+                ['netherite_scrap', 'netherite_scrap', 'netherite_scrap'],
+                ['netherite_scrap', 'gold_ingot',     'gold_ingot'],
+                ['gold_ingot',      'gold_ingot',      null]
+            ]},
+            { id: 'smithing_table', yield: 1, pattern: [
+                ['iron_ingot', 'iron_ingot'],
+                ['planks',     'planks']
+            ]}
+        ];
+
+        // --- 3. SMELTING FURNACE RECIPES ---
+        const SMELT_RECIPES = {
+            wood_log: { output: 'charcoal', time: 3 },
+            cobblestone: { output: 'stone', time: 3 },
+            raw_iron: { output: 'iron_ingot', time: 4 },
+            raw_gold: { output: 'gold_ingot', time: 5 },
+            raw_beef: { output: 'cooked_beef', time: 2 },
+            ancient_debris: { output: 'netherite_scrap', time: 10 }
+        };
+
+        const FUELS = {
+            coal: 8,
+            charcoal: 8,
+            wood_log: 2,
+            planks: 1.5,
+            stick: 0.5
+        };
+
+        // --- 4. AUTOMATION WORKERS ---
+        const WORKERS = [
+            { id: 'w_lumberjack', name: 'Villager Lumberjack', costItem: 'planks', costAmount: 20, itemYield: 'wood_log', rate: 1, dimension: 'overworld', icon: '🪓' },
+            { id: 'w_quarry', name: 'Automated Stone Quarry', costItem: 'wood_pickaxe', costAmount: 2, itemYield: 'cobblestone', rate: 2, dimension: 'overworld', icon: '🏗️' },
+            { id: 'w_iron_miner', name: 'Iron Miner', costItem: 'stone_pickaxe', costAmount: 2, itemYield: 'raw_iron', rate: 0.5, dimension: 'overworld', icon: '⛏️' },
+            { id: 'w_gold_miner', name: 'Gold Shaft', costItem: 'iron_pickaxe', costAmount: 2, itemYield: 'raw_gold', rate: 0.3, dimension: 'overworld', icon: '🪙' },
+            { id: 'w_mob_farm', name: 'Mob Grinder', costItem: 'iron_sword', costAmount: 2, itemYield: 'ender_pearl', rate: 0.2, dimension: 'overworld', icon: '🧟' },
+            { id: 'w_blaze_farm', name: 'Blaze Rod Trapper', costItem: 'iron_chestplate', costAmount: 1, itemYield: 'blaze_rod', rate: 0.25, dimension: 'nether', icon: '🔥' },
+            { id: 'w_netherite_quarry', name: 'Ancient Debris Drill', costItem: 'diamond_pickaxe', costAmount: 1, itemYield: 'ancient_debris', rate: 0.05, dimension: 'nether', icon: '🌋' }
+        ];
+
+        // --- 5. GAME STATE ---
+        let gameState = {
+            inventory: { wood_log: 10 },
+            equipped: { helmet: null, chest: null, legs: null, boots: null },
+            workers: {},
+            dimension: 'overworld',
+            station: 'inventory', // 'inventory', 'crafting', 'furnace', 'smithing'
+            unlockedDimensions: { overworld: true, nether: false, end: false },
+            stats: { gathered: 0, crafted: 0, startTime: Date.now() },
+            
+            // Crafting grid state (3x3 array)
+            craftGrid: [
+                [null, null, null],
+                [null, null, null],
+                [null, null, null]
+            ],
+
+            // Furnace state
+            furnace: {
+                input: null,
+                inputCount: 0,
+                fuel: null,
+                fuelCount: 0,
+                output: null,
+                outputCount: 0,
+                progress: 0,
+                maxTime: 0
+            },
+
+            // Smithing state
+            smithing: { base: null, addition: null },
+
+            // Boss fight state
+            dragonHP: 200,
+            dragonMaxHP: 200,
+            dragonDefeated: false
+        };
+
+        let activeRecipeCategory = 'all';
+
+        // --- 6. CORE GAME LOGIC & UTILITIES ---
+
+        function getPickaxeTier() {
+            let maxTier = 0;
+            // Check inventory for highest tier pickaxe
+            for (const itemId in gameState.inventory) {
+                if (gameState.inventory[itemId] > 0 && ITEMS[itemId] && ITEMS[itemId].pickaxeTier) {
+                    if (ITEMS[itemId].pickaxeTier > maxTier) {
+                        maxTier = ITEMS[itemId].pickaxeTier;
+                    }
+                }
+            }
+            return maxTier;
+        }
+
+        function getPickaxeTierName(tier) {
+            switch(tier) {
+                case 1: return 'Wood';
+                case 2: return 'Stone';
+                case 3: return 'Iron';
+                case 4: return 'Diamond';
+                case 5: return 'Netherite';
+                default: return 'Hand';
+            }
+        }
+
+        function getPlayerAttack() {
+            let baseAtk = 1;
+            // Check best sword in inventory
+            for (const itemId in gameState.inventory) {
+                if (gameState.inventory[itemId] > 0 && ITEMS[itemId] && ITEMS[itemId].atk) {
+                    if (ITEMS[itemId].atk > baseAtk) baseAtk = ITEMS[itemId].atk;
+                }
+            }
+            return baseAtk;
+        }
+
+        function getPlayerDefense() {
+            let totalDef = 0;
+            for (const slotKey in gameState.equipped) {
+                const itemId = gameState.equipped[slotKey];
+                if (itemId && ITEMS[itemId] && ITEMS[itemId].def) {
+                    totalDef += ITEMS[itemId].def;
+                }
+            }
+            return totalDef;
+        }
+
+        function addItem(itemId, count = 1) {
+            if (!ITEMS[itemId]) return;
+            gameState.inventory[itemId] = (gameState.inventory[itemId] || 0) + count;
+            gameState.stats.gathered += count;
+            updateUI();
+        }
+
+        function removeItem(itemId, count = 1) {
+            if (!gameState.inventory[itemId] || gameState.inventory[itemId] < count) return false;
+            gameState.inventory[itemId] -= count;
+            if (gameState.inventory[itemId] <= 0) {
+                delete gameState.inventory[itemId];
+            }
+            updateUI();
+            return true;
+        }
+
+        // Action: Click Gather Node
+        function gatherResource(nodeKey) {
+            const currentTier = getPickaxeTier();
+
+            if (nodeKey === 'wood') {
+                addItem('wood_log', 1);
+                sfx.playWoodChop();
+            } else if (nodeKey === 'cobble') {
+                if (currentTier < 1) {
+                    showFloatingText('Requires Wooden Pickaxe!');
+                    return;
+                }
+                addItem('cobblestone', 1);
+                sfx.playMineStone();
+            } else if (nodeKey === 'iron') {
+                if (currentTier < 2) {
+                    showFloatingText('Requires Stone Pickaxe!');
+                    return;
+                }
+                addItem('raw_iron', 1);
+                sfx.playMineStone();
+            } else if (nodeKey === 'gold') {
+                if (currentTier < 3) {
+                    showFloatingText('Requires Iron Pickaxe!');
+                    return;
+                }
+                addItem('raw_gold', 1);
+                sfx.playMineStone();
+            } else if (nodeKey === 'diamond') {
+                if (currentTier < 3) {
+                    showFloatingText('Requires Iron Pickaxe!');
+                    return;
+                }
+                addItem('diamond', 1);
+                sfx.playMineStone();
+            } else if (nodeKey === 'mob') {
+                const drops = ['leather', 'raw_beef', 'string', 'bone', 'gunpowder', 'ender_pearl'];
+                const randDrop = drops[Math.floor(Math.random() * drops.length)];
+                addItem(randDrop, 1);
+                sfx.playPop();
+            } else if (nodeKey === 'netherrack') {
+                addItem('netherrack', 1);
+                sfx.playMineStone();
+            } else if (nodeKey === 'blaze') {
+                addItem('blaze_rod', 1);
+                sfx.playPop();
+            } else if (nodeKey === 'ancient_debris') {
+                if (currentTier < 4) {
+                    showFloatingText('Requires Diamond Pickaxe!');
+                    return;
+                }
+                addItem('ancient_debris', 1);
+                sfx.playMineStone();
+            } else if (nodeKey === 'end_stone') {
+                addItem('end_stone', 1);
+                sfx.playMineStone();
+            }
+        }
+
+        // --- 7. CRAFTING GRID SYSTEM ---
+
+        function clearCraftingGrid() {
+            // Return items to inventory
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const item = gameState.craftGrid[r][c];
+                    if (item) {
+                        addItem(item, 1);
+                        gameState.craftGrid[r][c] = null;
+                    }
+                }
+            }
+            updateUI();
+        }
+
+        function setGridSlot(r, c, itemId) {
+            gameState.craftGrid[r][c] = itemId;
+            updateUI();
+        }
+
+        function matchRecipePattern() {
+            // Check grid matrix against known recipes
+            for (const recipe of RECIPES) {
+                const pat = recipe.pattern;
+                const patR = pat.length;
+                const patC = pat[0].length;
+
+                // Test offsets in 3x3 grid
+                for (let offsetR = 0; offsetR <= 3 - patR; offsetR++) {
+                    for (let offsetC = 0; offsetC <= 3 - patC; offsetC++) {
+                        let match = true;
+
+                        for (let r = 0; r < 3; r++) {
+                            for (let c = 0; c < 3; c++) {
+                                const gridItem = gameState.craftGrid[r][c];
+                                const pr = r - offsetR;
+                                const pc = c - offsetC;
+
+                                let expected = null;
+                                if (pr >= 0 && pr < patR && pc >= 0 && pc < patC) {
+                                    expected = pat[pr][pc];
+                                }
+
+                                if (gridItem !== expected) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+                            if (!match) break;
+                        }
+
+                        if (match) return recipe;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function craftOutputItem() {
+            const matched = matchRecipePattern();
+            if (!matched) return;
+
+            // Deduct items from crafting grid
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    if (gameState.craftGrid[r][c]) {
+                        gameState.craftGrid[r][c] = null;
+                    }
+                }
+            }
+
+            addItem(matched.id, matched.yield);
+            gameState.stats.crafted += matched.yield;
+            sfx.playCrafting();
+
+            // Unlock logic for Nether portal or stations
+            if (matched.id === 'nether_portal') {
+                gameState.unlockedDimensions.nether = true;
+                showFloatingText('Nether Unlocked!');
+            }
+
+            updateUI();
+        }
+
+        function craftAllPossible() {
+            let count = 0;
+            while (matchRecipePattern() && count < 64) {
+                craftOutputItem();
+                count++;
+            }
+        }
+
+        function quickAutoFillCraft(recipeId) {
+            let recipe = RECIPES.find(r => r.id === recipeId);
+            if (!recipe) {
+                const matched = matchRecipePattern();
+                if (matched) recipe = matched;
+            }
+            if (!recipe) return;
+
+            // Clear current grid first
+            clearCraftingGrid();
+
+            // Check if we have all necessary ingredients in inventory
+            const requiredCounts = {};
+            const pat = recipe.pattern;
+            for (let r = 0; r < pat.length; r++) {
+                for (let c = 0; c < pat[r].length; c++) {
+                    const item = pat[r][c];
+                    if (item) {
+                        requiredCounts[item] = (requiredCounts[item] || 0) + 1;
+                    }
+                }
+            }
+
+            for (const item in requiredCounts) {
+                if ((gameState.inventory[item] || 0) < requiredCounts[item]) {
+                    showFloatingText(`Missing ingredients: ${ITEMS[item].name}`);
+                    return;
+                }
+            }
+
+            // Fill grid and consume from inventory
+            for (let r = 0; r < pat.length; r++) {
+                for (let c = 0; c < pat[r].length; c++) {
+                    const item = pat[r][c];
+                    if (item) {
+                        removeItem(item, 1);
+                        gameState.craftGrid[r][c] = item;
+                    }
+                }
+            }
+
+            updateUI();
+        }
+
+        // --- 8. FURNACE & SMELTING SYSTEM ---
+
+        function selectFurnaceSlot(slotType) {
+            // Simple slot loading logic from inventory
+            if (slotType === 'input') {
+                for (const item in gameState.inventory) {
+                    if (SMELT_RECIPES[item]) {
+                        if (removeItem(item, 1)) {
+                            if (gameState.furnace.input === item) {
+                                gameState.furnace.inputCount++;
+                            } else {
+                                gameState.furnace.input = item;
+                                gameState.furnace.inputCount = 1;
+                            }
+                            break;
+                        }
+                    }
+                }
+            } else if (slotType === 'fuel') {
+                for (const item in gameState.inventory) {
+                    if (FUELS[item]) {
+                        if (removeItem(item, 1)) {
+                            if (gameState.furnace.fuel === item) {
+                                gameState.furnace.fuelCount++;
+                            } else {
+                                gameState.furnace.fuel = item;
+                                gameState.furnace.fuelCount = 1;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            updateUI();
+        }
+
+        function claimFurnaceOutput() {
+            if (gameState.furnace.output && gameState.furnace.outputCount > 0) {
+                addItem(gameState.furnace.output, gameState.furnace.outputCount);
+                gameState.furnace.output = null;
+                gameState.furnace.outputCount = 0;
+                sfx.playPop();
+                updateUI();
+            }
+        }
+
+        function updateFurnaceLoop(deltaSeconds) {
+            const f = gameState.furnace;
+            if (f.input && f.inputCount > 0 && f.fuel && f.fuelCount > 0) {
+                const recipe = SMELT_RECIPES[f.input];
+                if (recipe) {
+                    f.maxTime = recipe.time;
+                    f.progress += deltaSeconds;
+
+                    if (f.progress >= f.maxTime) {
+                        f.progress = 0;
+                        f.inputCount--;
+                        if (f.inputCount <= 0) f.input = null;
+
+                        f.fuelCount--;
+                        if (f.fuelCount <= 0) f.fuel = null;
+
+                        if (f.output === recipe.output) {
+                            f.outputCount++;
+                        } else {
+                            f.output = recipe.output;
+                            f.outputCount = 1;
+                        }
+
+                        sfx.playSmelt();
+                        updateUI();
+                    }
+                }
+            } else {
+                f.progress = 0;
+            }
+        }
+
+        // --- 9. SMITHING TABLE & EQUIPMENT ---
+
+        function performSmithing() {
+            // Netherite Upgrade logic
+            const base = gameState.smithing.base;
+            const add = gameState.smithing.addition;
+
+            if (base && add === 'netherite_ingot') {
+                let upgradedId = null;
+                if (base === 'diamond_pickaxe') upgradedId = 'netherite_pickaxe';
+                if (base === 'diamond_sword') upgradedId = 'netherite_sword';
+                if (base === 'diamond_helmet') upgradedId = 'netherite_helmet';
+                if (base === 'diamond_chestplate') upgradedId = 'netherite_chestplate';
+                if (base === 'diamond_leggings') upgradedId = 'netherite_leggings';
+                if (base === 'diamond_boots') upgradedId = 'netherite_boots';
+
+                if (upgradedId) {
+                    gameState.smithing.base = null;
+                    gameState.smithing.addition = null;
+                    addItem(upgradedId, 1);
+                    sfx.playCrafting();
+                    showFloatingText('NETHERITE UPGRADE COMPLETE!');
+                    updateUI();
+                }
+            }
+        }
+
+        function equipItem(itemId) {
+            const item = ITEMS[itemId];
+            if (!item || !item.slot) return;
+
+            const current = gameState.equipped[item.slot];
+            if (current) {
+                addItem(current, 1);
+            }
+            removeItem(itemId, 1);
+            gameState.equipped[item.slot] = itemId;
+            sfx.playPop();
+            updateUI();
+        }
+
+        function unequipSlot(slotKey) {
+            const current = gameState.equipped[slotKey];
+            if (current) {
+                addItem(current, 1);
+                gameState.equipped[slotKey] = null;
+                sfx.playPop();
+                updateUI();
+            }
+        }
+
+        // --- 10. BOSS BATTLE SYSTEM (ENDER DRAGON) ---
+
+        function attackBoss() {
+            const atk = getPlayerAttack();
+            const def = getPlayerDefense();
+
+            // Damage to Dragon
+            gameState.dragonHP = Math.max(0, gameState.dragonHP - atk);
+            sfx.playDragonHurt();
+
+            let logMsg = `You hit the Dragon for ${atk} damage!`;
+
+            // Counter attack from Dragon
+            if (gameState.dragonHP > 0) {
+                const rawDragonAtk = 20;
+                const takenDamage = Math.max(1, rawDragonAtk - Math.floor(def / 2));
+                logMsg += ` Dragon attacks back for ${takenDamage} damage!`;
+            } else {
+                gameState.dragonDefeated = true;
+                addItem('dragon_egg', 1);
+                logMsg = '🎉 YOU DEFEATED THE ENDER DRAGON! YOU WIN THE GAME!';
+                sfx.playCrafting();
+            }
+
+            document.getElementById('boss-log').textContent = logMsg;
+            updateUI();
+        }
+
+        // --- 11. WORKERS & AUTOMATION TICK ---
+
+        function buyWorker(workerId) {
+            const w = WORKERS.find(x => x.id === workerId);
+            if (!w) return;
+
+            const currentCount = gameState.workers[workerId] || 0;
+            const cost = Math.floor(w.costAmount * Math.pow(1.3, currentCount));
+
+            if (removeItem(w.costItem, cost)) {
+                gameState.workers[workerId] = currentCount + 1;
+                sfx.playPop();
+                updateUI();
+            } else {
+                showFloatingText(`Need ${cost} ${ITEMS[w.costItem].name}`);
+            }
+        }
+
+        function gameLoopTick(delta) {
+            // Process workers
+            let totalCPS = 0;
+            for (const w of WORKERS) {
+                const count = gameState.workers[w.id] || 0;
+                if (count > 0) {
+                    const yieldPerTick = w.rate * count * delta;
+                    totalCPS += w.rate * count;
+                    addItem(w.itemYield, yieldPerTick);
+                }
+            }
+
+            // Update CPS UI
+            document.getElementById('stat-cps').textContent = `${totalCPS.toFixed(1)} items/s`;
+
+            // Update furnace progress
+            updateFurnaceLoop(delta);
+        }
+
+        // --- 12. UI RENDER ENGINE ---
+
+        function switchDimension(dim) {
+            if (dim === 'nether' && !gameState.unlockedDimensions.nether) {
+                showFloatingText('Craft a Nether Portal first!');
+                return;
+            }
+            if (dim === 'end') {
+                // Requires 12 Eyes of Ender
+                if (!gameState.unlockedDimensions.end) {
+                    if ((gameState.inventory.eye_of_ender || 0) >= 12) {
+                        removeItem('eye_of_ender', 12);
+                        gameState.unlockedDimensions.end = true;
+                        showFloatingText('The End Portal Activated!');
+                    } else {
+                        showFloatingText('Requires 12 Eyes of Ender to unlock!');
+                        return;
+                    }
+                }
+            }
+
+            gameState.dimension = dim;
+            
+            // Tab highlight UI
+            ['overworld', 'nether', 'end'].forEach(d => {
+                const tabEl = document.getElementById(`tab-${d}`);
+                if (d === dim) {
+                    tabEl.classList.add('active');
+                } else {
+                    tabEl.classList.remove('active');
+                }
+            });
+
+            updateUI();
+        }
+
+        function switchStation(st) {
+            gameState.station = st;
+            ['inventory', 'crafting', 'furnace', 'smithing'].forEach(s => {
+                const btn = document.getElementById(`st-tab-${s}`);
+                if (s === st) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // Toggle view panels
+            document.getElementById('gui-crafting-view').style.display = (st === 'crafting' || st === 'inventory') ? 'flex' : 'none';
+            document.getElementById('gui-furnace-view').style.display = (st === 'furnace') ? 'flex' : 'none';
+            document.getElementById('gui-smithing-view').style.display = (st === 'smithing') ? 'flex' : 'none';
+
+            document.getElementById('station-title').textContent = 
+                st === 'inventory' ? '2x2 Inventory Crafting' :
+                st === 'crafting' ? '3x3 Crafting Table' :
+                st === 'furnace' ? 'Smelting Furnace' : 'Smithing Table';
+
+            updateUI();
+        }
+
+        function setRecipeCategory(cat) {
+            activeRecipeCategory = cat;
+            renderRecipeBook();
+        }
+
+        function renderGatheringNodes() {
+            const container = document.getElementById('gathering-nodes-container');
+            container.innerHTML = '';
+
+            const dim = gameState.dimension;
+            const currentTier = getPickaxeTier();
+
+            let nodes = [];
+            if (dim === 'overworld') {
+                nodes = [
+                    { id: 'wood', name: 'Punch Tree', icon: '🪵', req: 'Hand' },
+                    { id: 'cobble', name: 'Mine Cobblestone', icon: '🪨', req: 'Wood Pickaxe' },
+                    { id: 'iron', name: 'Mine Iron Ore', icon: '⚪', req: 'Stone Pickaxe' },
+                    { id: 'gold', name: 'Mine Gold Ore', icon: '🪙', req: 'Iron Pickaxe' },
+                    { id: 'diamond', name: 'Mine Diamond Ore', icon: '💎', req: 'Iron Pickaxe' },
+                    { id: 'mob', name: 'Hunt Monsters', icon: '🏹', req: 'Any Tool' }
+                ];
+            } else if (dim === 'nether') {
+                nodes = [
+                    { id: 'netherrack', name: 'Mine Netherrack', icon: '🧱', req: 'Hand' },
+                    { id: 'blaze', name: 'Fight Blaze', icon: '🔥', req: 'Sword' },
+                    { id: 'ancient_debris', name: 'Mine Ancient Debris', icon: '🌋', req: 'Diamond Pickaxe' }
+                ];
+            } else if (dim === 'end') {
+                nodes = [
+                    { id: 'end_stone', name: 'Mine End Stone', icon: '🟡', req: 'Hand' }
+                ];
+            }
+
+            nodes.forEach(n => {
+                const btn = document.createElement('button');
+                btn.className = 'mc-button w-full justify-between py-2 text-left';
+                btn.onclick = () => gatherResource(n.id);
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">${n.icon}</span>
+                        <div>
+                            <div class="font-bold text-sm">${n.name}</div>
+                            <div class="text-xs text-zinc-600">Req: ${n.req}</div>
+                        </div>
+                    </div>
+                    <span class="text-xs bg-zinc-700 text-yellow-300 px-2 py-1">GATHER</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function renderWorkers() {
+            const container = document.getElementById('workers-list');
+            container.innerHTML = '';
+
+            WORKERS.filter(w => w.dimension === gameState.dimension).forEach(w => {
+                const count = gameState.workers[w.id] || 0;
+                const cost = Math.floor(w.costAmount * Math.pow(1.3, count));
+                const itemDef = ITEMS[w.costItem];
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-zinc-300 p-2 border border-zinc-500 text-black text-xs';
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">${w.icon}</span>
+                        <div>
+                            <div class="font-bold">${w.name} (${count})</div>
+                            <div class="text-zinc-700">+${(w.rate * count).toFixed(1)} ${ITEMS[w.itemYield].name}/s</div>
+                        </div>
+                    </div>
+                    <button onclick="buyWorker('${w.id}')" class="mc-button py-1 px-2 text-xs">
+                        Buy (${cost} ${itemDef ? itemDef.name : w.costItem})
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderCraftingGrid() {
+            const gridEl = document.getElementById('crafting-grid');
+            gridEl.innerHTML = '';
+
+            const is2x2 = gameState.station === 'inventory';
+            gridEl.className = is2x2 ? 'grid grid-cols-2 gap-1 p-2 bg-zinc-600 border-2 border-zinc-800' : 'grid grid-cols-3 gap-1 p-2 bg-zinc-600 border-2 border-zinc-800';
+
+            const rows = is2x2 ? 2 : 3;
+            const cols = is2x2 ? 2 : 3;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const itemId = gameState.craftGrid[r][c];
+                    const itemDef = ITEMS[itemId];
+
+                    const slot = document.createElement('div');
+                    slot.className = 'mc-slot';
+                    slot.onclick = () => {
+                        if (itemId) {
+                            // Click to remove back to inventory
+                            addItem(itemId, 1);
+                            gameState.craftGrid[r][c] = null;
+                            updateUI();
+                        }
+                    };
+
+                    if (itemDef) {
+                        slot.innerHTML = `<span class="text-2xl">${itemDef.icon}</span>`;
+                        slot.onmouseenter = (e) => showTooltip(e, itemDef);
+                        slot.onmouseleave = hideTooltip;
+                    }
+                    gridEl.appendChild(slot);
+                }
+            }
+
+            // Render Output preview
+            const matched = matchRecipePattern();
+            const outputIcon = document.getElementById('output-icon');
+            const outputCount = document.getElementById('output-count');
+
+            if (matched && ITEMS[matched.id]) {
+                outputIcon.textContent = ITEMS[matched.id].icon;
+                outputCount.textContent = matched.yield > 1 ? matched.yield : '';
+            } else {
+                outputIcon.textContent = '';
+                outputCount.textContent = '';
+            }
+        }
+
+        function renderFurnace() {
+            const f = gameState.furnace;
+            
+            // Input
+            const inEl = document.getElementById('furnace-input');
+            inEl.innerHTML = f.input && ITEMS[f.input] ? `<span class="text-2xl">${ITEMS[f.input].icon}</span><span class="mc-slot-count">${f.inputCount}</span>` : '';
+            
+            // Fuel
+            const fuelEl = document.getElementById('furnace-fuel');
+            fuelEl.innerHTML = f.fuel && ITEMS[f.fuel] ? `<span class="text-2xl">${ITEMS[f.fuel].icon}</span><span class="mc-slot-count">${f.fuelCount}</span>` : '';
+
+            // Output
+            const outEl = document.getElementById('furnace-output');
+            outEl.innerHTML = f.output && ITEMS[f.output] ? `<span class="text-2xl">${ITEMS[f.output].icon}</span><span class="mc-slot-count">${f.outputCount}</span>` : '';
+
+            // Progress Bar
+            const percent = f.maxTime > 0 ? (f.progress / f.maxTime) * 100 : 0;
+            document.getElementById('furnace-progress').style.width = `${percent}%`;
+        }
+
+        function renderRecipeBook() {
+            const grid = document.getElementById('recipe-book-grid');
+            grid.innerHTML = '';
+
+            const query = document.getElementById('recipe-search').value.toLowerCase();
+
+            RECIPES.forEach(r => {
+                const itemDef = ITEMS[r.id];
+                if (!itemDef) return;
+
+                if (activeRecipeCategory !== 'all' && itemDef.category !== activeRecipeCategory) return;
+                if (query && !itemDef.name.toLowerCase().includes(query)) return;
+
+                const card = document.createElement('div');
+                card.className = 'flex items-center justify-between p-1 bg-zinc-200 border border-zinc-400 text-black text-xs cursor-pointer hover:bg-yellow-200';
+                card.onclick = () => quickAutoFillCraft(r.id);
+                card.innerHTML = `
+                    <div class="flex items-center gap-1">
+                        <span class="text-xl">${itemDef.icon}</span>
+                        <span class="font-bold truncate max-w-[90px]">${itemDef.name}</span>
+                    </div>
+                    <span class="text-zinc-600 font-bold">x${r.yield}</span>
+                `;
+                card.onmouseenter = (e) => showTooltip(e, itemDef);
+                card.onmouseleave = hideTooltip;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid');
+            grid.innerHTML = '';
+
+            const filter = document.getElementById('inv-search').value.toLowerCase();
+            let totalItemTypes = 0;
+
+            for (const itemId in gameState.inventory) {
+                const count = Math.floor(gameState.inventory[itemId]);
+                if (count <= 0) continue;
+
+                const itemDef = ITEMS[itemId];
+                if (!itemDef) continue;
+                if (filter && !itemDef.name.toLowerCase().includes(filter)) continue;
+
+                totalItemTypes++;
+
+                const slot = document.createElement('div');
+                slot.className = 'mc-slot';
+                slot.innerHTML = `
+                    <span class="text-2xl">${itemDef.icon}</span>
+                    <span class="mc-slot-count">${count > 1 ? count : ''}</span>
+                `;
+
+                slot.onclick = () => {
+                    // Equip armor if equipable
+                    if (itemDef.slot) {
+                        equipItem(itemId);
+                    } else if (gameState.station === 'smithing') {
+                        if (itemId === 'netherite_ingot') gameState.smithing.addition = itemId;
+                        else gameState.smithing.base = itemId;
+                        updateUI();
+                    }
+                };
+
+                slot.onmouseenter = (e) => showTooltip(e, itemDef);
+                slot.onmouseleave = hideTooltip;
+
+                grid.appendChild(slot);
+            }
+
+            document.getElementById('inv-capacity-text').textContent = `Types: ${totalItemTypes}`;
+        }
+
+        function renderEquipment() {
+            ['helmet', 'chest', 'legs', 'boots'].forEach(slotKey => {
+                const el = document.getElementById(`eq-${slotKey}`);
+                const itemId = gameState.equipped[slotKey];
+                const itemDef = ITEMS[itemId];
+
+                if (itemDef) {
+                    el.innerHTML = `<span class="text-2xl">${itemDef.icon}</span>`;
+                    el.onmouseenter = (e) => showTooltip(e, itemDef);
+                    el.onmouseleave = hideTooltip;
+                } else {
+                    el.innerHTML = '';
+                    el.onmouseenter = null;
+                }
+            });
+
+            document.getElementById('stat-atk').textContent = getPlayerAttack();
+            document.getElementById('stat-def').textContent = getPlayerDefense();
+        }
+
+        function updateUI() {
+            // Update Pickaxe badge
+            const currentTier = getPickaxeTier();
+            const badge = document.getElementById('pickaxe-tier-badge');
+            badge.textContent = `Tier: ${getPickaxeTierName(currentTier)}`;
+
+            // Update Locks
+            document.getElementById('nether-lock').style.display = gameState.unlockedDimensions.nether ? 'none' : 'inline';
+            document.getElementById('end-lock').style.display = gameState.unlockedDimensions.end ? 'none' : 'inline';
+
+            // Show/Hide Boss Battle Panel
+            if (gameState.dimension === 'end') {
+                document.getElementById('boss-panel').style.display = 'flex';
+                document.getElementById('boss-hp-text').textContent = `${gameState.dragonHP} / ${gameState.dragonMaxHP}`;
+                const hpPercent = (gameState.dragonHP / gameState.dragonMaxHP) * 100;
+                document.getElementById('boss-hp-bar').style.width = `${hpPercent}%`;
+            } else {
+                document.getElementById('boss-panel').style.display = 'none';
+            }
+
+            // Stats
+            document.getElementById('stat-gathered').textContent = Math.floor(gameState.stats.gathered);
+            document.getElementById('stat-crafted').textContent = Math.floor(gameState.stats.crafted);
+
+            // Sub-renderers
+            renderGatheringNodes();
+            renderWorkers();
+            renderCraftingGrid();
+            renderFurnace();
+            renderInventory();
+            renderEquipment();
+            renderRecipeBook();
+        }
+
+        // --- 13. TOOLTIP & FLOATING TEXT HELPER ---
+
+        function showTooltip(e, item) {
+            const tooltip = document.getElementById('tooltip');
+            document.getElementById('tooltip-title').textContent = item.name;
+            document.getElementById('tooltip-desc').textContent = item.desc || 'Minecraft crafting component.';
+            
+            let statsText = '';
+            if (item.atk) statsText += `Attack: +${item.atk} `;
+            if (item.def) statsText += `Armor: +${item.def} `;
+            if (item.pickaxeTier) statsText += `Mining Tier: ${item.pickaxeTier}`;
+            document.getElementById('tooltip-stats').textContent = statsText;
+
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${e.pageX + 12}px`;
+            tooltip.style.top = `${e.pageY + 12}px`;
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+
+        function showFloatingText(txt) {
+            const el = document.createElement('div');
+            el.className = 'float-text';
+            el.textContent = txt;
+            el.style.left = `${window.innerWidth / 2 - 50}px`;
+            el.style.top = `${window.innerHeight / 2}px`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        // --- 14. SAVE & LOAD SYSTEM ---
+
+        function saveGame(showNotif = false) {
+            localStorage.setItem('grindcraft_expanded_save', JSON.stringify(gameState));
+            if (showNotif) showFloatingText('Game Saved!');
+        }
+
+        function loadGame() {
+            const raw = localStorage.getItem('grindcraft_expanded_save');
+            if (raw) {
+                try {
+                    const loaded = JSON.parse(raw);
+                    gameState = { ...gameState, ...loaded };
+                } catch(e) {
+                    console.error('Save game load failed', e);
+                }
+            }
+        }
+
+        function exportSave() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gameState));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `grindcraft_save_${Date.now()}.json`);
+            dlAnchorElem.click();
+        }
+
+        function importSavePrompt() {
+            const input = prompt("Paste your export JSON code here:");
+            if (input) {
+                try {
+                    const parsed = JSON.parse(input);
+                    gameState = parsed;
+                    saveGame();
+                    updateUI();
+                    alert("Save imported successfully!");
+                } catch(e) {
+                    alert("Invalid save file!");
+                }
+            }
+        }
+
+        function confirmReset() {
+            if (confirm("Are you sure you want to reset all progress?")) {
+                localStorage.removeItem('grindcraft_expanded_save');
+                location.reload();
+            }
+        }
+
+        // --- 15. INITIALIZATION & MAIN LOOP ---
+
+        window.onload = function() {
+            loadGame();
+            updateUI();
+
+            // Main game loop running at 10 ticks per second
+            let lastTime = Date.now();
+            setInterval(() => {
+                const now = Date.now();
+                const delta = (now - lastTime) / 1000;
+                lastTime = now;
+
+                gameLoopTick(delta);
+            }, 100);
+
+            // Auto-save every 30 seconds
+            setInterval(() => {
+                saveGame(false);
+            }, 30000);
+        };
+    </script>
+</body>
+</html>
